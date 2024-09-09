@@ -24,7 +24,21 @@ task class should be able to:
     reward function.
 
 quesstion, why need decision threshold? 
+
+add acc, but assume agent know,
+we assume agent know self motion.
+fix hg, thats control noise
+fix q given sm or nosm.
+    compute the mu and cov directly. 3.49
+    still 4 cases, compute muand cov differecly.
+
+need from john:
+script for generating simulation data and optimizing the model.
+data and script for loading real data. no need to have all preprocessing, since my goal is to do some visualizations of subject behavior and have better understanding of the task.
+updated notes (you mentioned some time ago you are writing one?)
+
 '''
+
 
 
 class Model(gym.Env):
@@ -115,6 +129,7 @@ class Model(gym.Env):
         return f, w
 
     def decide_selfmotion(self, w):
+        '''we can just use the avg w across time, to decide selfmotion.'''
         mu_w = self.t_obs/self.hsig_w**2 / \
             (1/self.hxi_w**2 + self.t_obs/self.hsig_w**2)*torch.mean(w)
         compare = torch.sqrt(nn.functional.relu(torch.log(1+self.hxi_w**2*self.t_obs /
@@ -181,6 +196,7 @@ class Model(gym.Env):
     def step(self, u):
         '''
         state x: [distance f, invis firefly v, user w]
+        belief z: [distance f, invis firefly v, user w] estimation of state
         '''
         
 
@@ -202,7 +218,7 @@ class Model(gym.Env):
 
         agent_observation=self.policy_preprocess()
         info={'obs':obs}
-        return agent_observation,  reward, done, info
+        return agent_observation, reward, done, info
 
     def reward(self,):
         '''eval reward'''
@@ -211,9 +227,10 @@ class Model(gym.Env):
         return reach_reward
 
     def state_dynamic(self, f, v, w, u):
-        '''action phase state dynamic'''
+        '''action phase state dynamic
+        u: noisy control'''
         ft = f+(v-w)*self.dt
-        wt = self.hg*u
+        wt = u
         return ft, v, wt
 
     def belief_dynamic(self, z, S, u, obs):
@@ -224,11 +241,12 @@ class Model(gym.Env):
         x_next = Ax + Bu
 
         question, why update? no system noise and obs is noisy.
+        conlustion: fully use obs. no prediction is neede.
         '''
     
         # prepare
         R = torch.zeros(1, 1)
-        R[0, 0] = self.hsig_w**2  # ww
+        R[0, 0] = self.hg**2  # ww todo: a different parameter we need infer
         H = torch.tensor([[0., 0., 1.]])  # f,v,w. can only see w.
 
         # prediction

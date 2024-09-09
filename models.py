@@ -29,7 +29,8 @@ class Model_NoSM_ControlA(nn.Module):
         self.delta0 = nn.Parameter(torch.rand(1)) # move or not, decision prior
         # -------------------------
         # Control model parameters
-        self.halpha = nn.Parameter(torch.rand(1)) # acc?
+        self.halpha = nn.Parameter(torch.rand(1)) # acc of the v in action phase.
+        #()
         self.hg = nn.Parameter(torch.rand(1)) # control gain
 
         # Other parameters
