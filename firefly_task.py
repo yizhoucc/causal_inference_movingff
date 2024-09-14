@@ -5,32 +5,28 @@ import torch
 import torch.nn as nn
 from gym.spaces import Discrete, MultiDiscrete, Box
 '''
-design:
-
-task class should be able to:
-    run dynamics. of course
-    run belief dynamics. policy will take the belief to train agents.
-    
-    obs phase:
-        we dont need to run the dynamics.
-        just need the output
-        output: belief (mu and covariance of the unimodel distribution. use threshold q)
-        using john functions.
+notes about meeting with john 0913
+overall flow:
+    observation phase:
+        we will decide self motion first, then decide obj motion, then calculate the distribution of beliefs.
+        1 self motion is very easy to tell. no need to causual inference with math. just assume subject get it 100%
+        2 once decide the self motion, we compute the obj motion causual inference, using math equations. note the q threshold should be computed differently given the selfmotion decision.
+        note we should compute the esimated v by cov(ft, t)/cov(t,t,) instead of doing avg-avg.
+        3 now we have the dicision. there are 4 cases. selfmotion or not, cross objmotion or not. we compute the belief mu and covariance for the case we are in.
     steering phase.
-        basic 1d dynamics. Ax+Bu+system noise? is there a system noise?
-        belief dyanmics, kalman filter.
-        iterative time step. output each belief at each time.
-    random parameters. give agent enough evidence to generalize.
-    reward function.
+        we can only obs selfmotion
+        the control has noise. no system noise.
+        obj has acceration in this phase, but we just assume subject know it perfectly (tho learning).
+        the optimial strategy is to fully use observation. the w we see, is the noisy action (action+action noise) that act on the system with a deterministic funciton (fixed transition, no system noise.). altho the belief uncertainty about locations will grow due to intergration.
 
-quesstion, why need decision threshold? 
 
-add acc, but assume agent know,
-we assume agent know self motion.
-fix hg, thats control noise
-fix q given sm or nosm.
-    compute the mu and cov directly. 3.49
-    still 4 cases, compute muand cov differecly.
+todo:
+    add acc, but assume agent know,
+    assume agent know self motion.
+    fix hg, that is control noise
+    fix q given sm or nosm.
+    4 cases, compute muand cov differently.
+
 
 need from john:
 script for generating simulation data and optimizing the model.
